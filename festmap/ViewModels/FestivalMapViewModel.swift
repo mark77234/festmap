@@ -31,12 +31,19 @@ class FestivalMapViewModel: ObservableObject {
             }
 
             var detailItem: TourAPIDetailItem? = nil
+            var introItem: TourAPIIntroItem? = nil
             var images: [String] = []
 
             do {
                 detailItem = try await TourAPIService.shared.fetchFestivalDetail(contentId: festival.id)
             } catch {
                 print("[ViewModel] fetchFestivalDetail error: \(error)")
+            }
+
+            do {
+                introItem = try await TourAPIService.shared.fetchFestivalIntro(contentId: festival.id)
+            } catch {
+                print("[ViewModel] fetchFestivalIntro error: \(error)")
             }
 
             do {
@@ -64,6 +71,13 @@ class FestivalMapViewModel: ObservableObject {
                 phone: detailItem?.tel ?? festival.phone,
                 overview: detailItem?.overview ?? festival.overview,
                 homepage: detailItem?.homepage ?? festival.homepage,
+                eventStartDate: introItem?.eventstartdate ?? festival.eventStartDate ?? festival.startDate,
+                eventEndDate: introItem?.eventenddate ?? festival.eventEndDate ?? festival.endDate,
+                eventPlace: introItem?.eventplace,
+                useTimeFestival: introItem?.usetimefestival,
+                playTime: introItem?.playtime,
+                sponsor1: introItem?.sponsor1,
+                ageLimit: introItem?.agelimit,
                 imageURLs: combinedImageURLs
             )
 

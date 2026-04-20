@@ -98,9 +98,52 @@ final class TourAPIService {
                 phone: item.tel.flatMap { $0.isEmpty ? nil : $0 },
                 overview: nil,
                 homepage: nil,
+                eventStartDate: item.eventstartdate,
+                eventEndDate: item.eventenddate,
+                eventPlace: nil,
+                useTimeFestival: nil,
+                playTime: nil,
+                sponsor1: nil,
+                ageLimit: nil,
                 imageURLs: nil
             )
         }
+    }
+
+    func fetchFestivalIntro(contentId: String) async throws -> TourAPIIntroItem? {
+        let params: [String: String] = [
+            "contentId": contentId,
+            "contentTypeId": "15",
+            "numOfRows": "1",
+            "pageNo": "1"
+        ]
+
+        let data = try await client.get(path: "detailIntro2", params: params)
+        let decoded = try JSONDecoder().decode(TourAPIIntroResponse.self, from: data)
+
+        if let code = decoded.response.header?.resultCode, code != "0000" {
+            let msg = decoded.response.header?.resultMsg ?? "Unknown error"
+            throw NSError(domain: "TourAPI", code: Int(code) ?? -1, userInfo: [NSLocalizedDescriptionKey: "API Error \(code): \(msg)"])
+        }
+
+        let items = decoded.response.body?.items?.item ?? []
+        print("[TourAPIService] detailIntro2 items count: \(items.count) for contentId: \(contentId)")
+        if let first = items.first {
+            print("[TourAPIService] detailIntro2 first: contentId=\(first.contentid ?? "-"), eventplace=\(first.eventplace ?? "-"), sponsor1=\(first.sponsor1 ?? "-")")
+        } else {
+            print("[TourAPIService] detailIntro2: no item found for contentId=\(contentId)")
+        }
+
+        return items.first
+    }
+
+    func sanitizeImageURL(_ raw: String) -> String {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        // visitkorea hosts sometimes return http; prefer https when available
+        if s.hasPrefix("http://") && s.contains("tong.visitkorea.or.kr") {
+            return s.replacingOccurrences(of: "http://", with: "https://")
+        }
+        return s
     }
 
     func fetchFestivalDetail(contentId: String) async throws -> TourAPIDetailItem? {
@@ -149,7 +192,8 @@ final class TourAPIService {
         print("[TourAPIService] detailImage2 items count: \(items.count) for contentId: \(contentId)")
 
         // 우선 originimgurl 우선, 없으면 smallimageurl 사용
-        let urls = items.compactMap { $0.originimgurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.originimgurl : ($0.smallimageurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.smallimageurl : nil) }
+        let rawUrls = items.compactMap { $0.originimgurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.originimgurl : ($0.smallimageurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.smallimageurl : nil) }
+        let urls = rawUrls.map { sanitizeImageURL($0) }
         return urls
     }
 

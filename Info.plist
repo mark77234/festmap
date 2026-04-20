@@ -77,6 +77,15 @@
                 <key>NSExceptionRequiresForwardSecrecy</key>
                 <false/>
             </dict>
+            <key>tong.visitkorea.or.kr</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
         </dict>
     </dict>
 </dict>

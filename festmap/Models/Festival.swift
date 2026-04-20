@@ -13,6 +13,14 @@ struct Festival: Identifiable {
     // 추가 상세 정보
     let overview: String?
     let homepage: String?
+    // detailIntro2에서 가져올 추가 필드 (축제 전용)
+    let eventStartDate: String?
+    let eventEndDate: String?
+    let eventPlace: String?
+    let useTimeFestival: String?
+    let playTime: String?
+    let sponsor1: String?
+    let ageLimit: String?
     // 추가 이미지 컬렉션 (detailImage2)
     let imageURLs: [String]?
 
@@ -26,6 +34,12 @@ struct Festival: Identifiable {
         let m = raw.dropFirst(4).prefix(2)
         let d = raw.dropFirst(6).prefix(2)
         return "\(y).\(m).\(d)"
+    }
+
+    var formattedEventPeriod: String? {
+        guard let s = eventStartDate, let e = eventEndDate, !s.isEmpty || !e.isEmpty else { return nil }
+        if !s.isEmpty && !e.isEmpty { return "\(formatDate(s)) ~ \(formatDate(e))" }
+        return s.isEmpty ? (e.isEmpty ? nil : formatDate(e)) : formatDate(s)
     }
 }
 
@@ -175,4 +189,50 @@ struct TourAPIDetailImageItem: Decodable {
     let originimgurl: String?
     let serialnum: String?
     let smallimageurl: String?
+}
+
+// MARK: - detailIntro2 응답 타입 (소개정보조회)
+
+struct TourAPIIntroResponse: Decodable {
+    let response: TourAPIIntroBody
+}
+
+struct TourAPIIntroBody: Decodable {
+    let header: TourAPIHeader?
+    let body: TourAPIIntroContent?
+}
+
+struct TourAPIIntroContent: Decodable {
+    let items: TourAPIIntroItemContainer?
+    let numOfRows: Int?
+    let pageNo: Int?
+    let totalCount: Int?
+}
+
+struct TourAPIIntroItemContainer: Decodable {
+    let item: [TourAPIIntroItem]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let arr = try? container.decode([TourAPIIntroItem].self, forKey: .item) {
+            item = arr
+        } else if let single = try? container.decode(TourAPIIntroItem.self, forKey: .item) {
+            item = [single]
+        } else {
+            item = []
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case item }
+}
+
+struct TourAPIIntroItem: Decodable {
+    let eventstartdate: String?
+    let eventenddate: String?
+    let eventplace: String?
+    let usetimefestival: String?
+    let playtime: String?
+    let sponsor1: String?
+    let agelimit: String?
+    let contentid: String?
 }

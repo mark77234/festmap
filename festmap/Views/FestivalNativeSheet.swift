@@ -79,6 +79,42 @@ struct FestivalNativeSheet: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
 
+                    if let eventPeriod = festival.formattedEventPeriod {
+                        Text("행사기간: \(eventPeriod)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    if let eventPlace = festival.eventPlace, !eventPlace.isEmpty {
+                        Text("행사장: \(eventPlace)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    if let useTime = festival.useTimeFestival, !useTime.isEmpty {
+                        Text("관람시간: \(useTime)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    if let ptime = festival.playTime, !ptime.isEmpty {
+                        Text("공연시간: \(ptime)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    if let sponsor = festival.sponsor1, !sponsor.isEmpty {
+                        Text("주최: \(sponsor)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    if let age = festival.ageLimit, !age.isEmpty {
+                        Text("관람연령: \(age)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
                     Button(action: { copyAddress() }) {
                         HStack(spacing: 8) {
                             Image(systemName: "mappin.and.ellipse")
@@ -322,7 +358,27 @@ struct FestivalNativeSheet: View {
 
 struct FestivalNativeSheet_Previews: PreviewProvider {
     static var previews: some View {
-        FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678", overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.", homepage: "https://example.com", imageURLs: ["https://picsum.photos/800/400","https://picsum.photos/801/400"])) {
+        FestivalNativeSheet(festival: Festival(
+            id: "1",
+            title: "샘플 축제",
+            address: "서울시 강남구",
+            longitude: 127.0,
+            latitude: 37.0,
+            imageURL: nil,
+            startDate: "20240101",
+            endDate: "20240103",
+            phone: "02-1234-5678",
+            overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.",
+            homepage: "https://example.com",
+            eventStartDate: "20240101",
+            eventEndDate: "20240103",
+            eventPlace: "강남광장",
+            useTimeFestival: "10:00 - 18:00",
+            playTime: "11:00 - 17:00",
+            sponsor1: "샘플 주최",
+            ageLimit: "전체",
+            imageURLs: ["https://picsum.photos/800/400","https://picsum.photos/801/400"]
+        )) {
             // dismiss
         }
         .environmentObject(FestivalMapViewModel())
