@@ -258,6 +258,8 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(DWARF_DSYM_FOLDER_PATH)/KakaoMapsSDK.framework.dSYM/Contents/Resources/DWARF/KakaoMapsSDK",
+				"$(ARCHIVE_DSYMS_PATH)/KakaoMapsSDK.framework.dSYM/Contents/Resources/DWARF/KakaoMapsSDK",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
