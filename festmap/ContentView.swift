@@ -57,6 +57,7 @@ struct ContentView: View {
             FestivalNativeSheet(festival: festival) {
                 viewModel.deselectFestival()
             }
+            .environmentObject(viewModel)
             .presentationDetents([.fraction(0.35), .medium, .large])
             .presentationDragIndicator(.visible)
         }

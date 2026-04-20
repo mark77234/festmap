@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import SafariServices
 
 struct FestivalNativeSheet: View {
     let festival: Festival
@@ -7,7 +8,10 @@ struct FestivalNativeSheet: View {
 
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var viewModel: FestivalMapViewModel
     @State private var showCopied = false
+    @State private var showSafari = false
+    @State private var safariURL: URL? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -120,6 +124,32 @@ struct FestivalNativeSheet: View {
         }
         .presentationDragIndicator(.visible)
         .presentationDetents([.fraction(0.35), .medium])
+        .sheet(isPresented: $showSafari) {
+            if let url = safariURL {
+                SafariView(url: url)
+                    .edgesIgnoringSafeArea(.all)
+            }
+        }
+        .zIndex(0)
+
+        // 로딩 오버레이
+        .overlay(alignment: .center) {
+            if viewModel.isDetailLoading {
+                VStack(spacing: 8) {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .scaleEffect(1.1)
+                        .padding(12)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    Text("상세정보 불러오는 중...")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .transition(.opacity)
+                .zIndex(1)
+            }
+        }
     }
 
     private var placeholderView: some View {
@@ -135,6 +165,10 @@ struct FestivalNativeSheet: View {
 
     private func copyAddress() {
         UIPasteboard.general.string = festival.address
+        // 햅틱 피드백
+        let gen = UINotificationFeedbackGenerator()
+        gen.notificationOccurred(.success)
+
         withAnimation { showCopied = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
             withAnimation { showCopied = false }
@@ -157,11 +191,8 @@ struct FestivalNativeSheet: View {
             str = "https://\(str)"
         }
         guard let url = URL(string: str) else { return }
-        if UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url)
-        } else {
-            _ = openURL(url)
-        }
+        safariURL = url
+        showSafari = true
     }
 }
 
@@ -170,6 +201,20 @@ struct FestivalNativeSheet_Previews: PreviewProvider {
         FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678", overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.", homepage: "https://example.com")) {
             // dismiss
         }
+        .environmentObject(FestivalMapViewModel())
         .previewLayout(.sizeThatFits)
     }
+}
+
+// SFSafariViewController 래퍼
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let vc = SFSafariViewController(url: url)
+        vc.dismissButtonStyle = .close
+        return vc
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }

@@ -5,6 +5,7 @@ import Combine
 class FestivalMapViewModel: ObservableObject {
     @Published var festivals: [Festival] = []
     @Published var selectedFestival: Festival? = nil
+    @Published var isDetailLoading: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
@@ -22,8 +23,13 @@ class FestivalMapViewModel: ObservableObject {
 
     func selectFestival(_ festival: Festival) {
         selectedFestival = festival
+        isDetailLoading = true
 
         Task {
+            defer {
+                Task { @MainActor in self.isDetailLoading = false }
+            }
+
             do {
                 if let detail = try await TourAPIService.shared.fetchFestivalDetail(contentId: festival.id) {
                     // 병합: 상세정보로 업데이트
@@ -54,5 +60,6 @@ class FestivalMapViewModel: ObservableObject {
 
     func deselectFestival() {
         selectedFestival = nil
+        isDetailLoading = false
     }
 }
