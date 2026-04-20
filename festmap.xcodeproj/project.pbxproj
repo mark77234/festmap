@@ -195,11 +195,12 @@
 				};
 			};
 			buildConfigurationList = 12712AC32F9538B800D2CBB5 /* Build configuration list for PBXProject "festmap" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				ko,
 			);
 			mainGroup = 12712ABF2F9538B800D2CBB5;
 			minimizedProjectReferenceProxies = 1;
