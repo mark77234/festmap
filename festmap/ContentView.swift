@@ -51,19 +51,14 @@ struct ContentView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            // 축제 바텀시트
-            if let festival = viewModel.selectedFestival {
-                VStack {
-                    Spacer()
-                    FestivalBottomSheet(festival: festival) {
-                        viewModel.deselectFestival()
-                    }
-                    .transition(.move(edge: .bottom))
-                }
-                .ignoresSafeArea(edges: .bottom)
-                .background(Color.black.opacity(0.3).ignoresSafeArea())
-                .onTapGesture { viewModel.deselectFestival() }
+            // 네이티브 바텀시트는 아래 .sheet로 표시됩니다
+        }
+        .sheet(item: $viewModel.selectedFestival, onDismiss: { viewModel.deselectFestival() }) { festival in
+            FestivalNativeSheet(festival: festival) {
+                viewModel.deselectFestival()
             }
+            .presentationDetents([.fraction(0.35), .medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .statusBarHidden(true)
         .task {

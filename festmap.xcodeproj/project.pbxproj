@@ -611,11 +611,6 @@
 			package = 12712BE22F95475800D2CBB5 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
 			productName = "KakaoMapsSDK-SPM";
 		};
-		12712BE52F95475800D2CBB5 /* KakaoMapsSDK-SPM-Dynamic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 12712BE22F95475800D2CBB5 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
-			productName = "KakaoMapsSDK-SPM-Dynamic";
-		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 12712AC02F9538B800D2CBB5 /* Project object */;
