@@ -109,6 +109,7 @@
 				12712AC42F9538B800D2CBB5 /* Sources */,
 				12712AC52F9538B800D2CBB5 /* Frameworks */,
 				12712AC62F9538B800D2CBB5 /* Resources */,
+				BBCC0001BBCC0001BBCC0001 /* Generate KakaoMapsSDK dSYM */,
 			);
 			buildRules = (
 			);
@@ -242,6 +243,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		BBCC0001BBCC0001BBCC0001 /* Generate KakaoMapsSDK dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate KakaoMapsSDK dSYM";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC_DSYM=\"${SRCROOT}/KakaoMapsSDK.framework.dSYM\"\nDSYM_DEST=\"${DWARF_DSYM_FOLDER_PATH}/KakaoMapsSDK.framework.dSYM\"\n\nif [ -d \"${SRC_DSYM}\" ]; then\n    cp -R \"${SRC_DSYM}\" \"${DSYM_DEST}\"\n    echo \"Copied KakaoMapsSDK.framework.dSYM to ${DSYM_DEST}\"\n    if [ -n \"${ARCHIVE_DSYMS_PATH}\" ]; then\n        cp -R \"${SRC_DSYM}\" \"${ARCHIVE_DSYMS_PATH}/KakaoMapsSDK.framework.dSYM\"\n        echo \"Also copied KakaoMapsSDK.framework.dSYM to ${ARCHIVE_DSYMS_PATH}\"\n    fi\nelse\n    echo \"warning: KakaoMapsSDK.framework.dSYM not found at ${SRC_DSYM}\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		12712AC42F9538B800D2CBB5 /* Sources */ = {
@@ -410,6 +432,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = GQ89YG5G9R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -444,6 +467,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = GQ89YG5G9R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
