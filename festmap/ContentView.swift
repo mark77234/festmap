@@ -1,61 +1,57 @@
-//
-//  ContentView.swift
-//  festmap
-//
-//  Created by 이병찬 on 4/20/26.
-//
-
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @StateObject private var viewModel = FestivalMapViewModel()
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        ZStack {
+            // 풀스크린 카카오맵
+            KakaoMapView(viewModel: viewModel)
+                .ignoresSafeArea()
+
+            // 로딩 인디케이터
+            if viewModel.isLoading {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .scaleEffect(1.2)
+                    .padding(16)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            }
+
+            // 에러 토스트
+            if let message = viewModel.errorMessage {
+                VStack {
+                    Spacer()
+                    Text(message)
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(Color.black.opacity(0.75), in: Capsule())
+                        .padding(.bottom, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            // 축제 바텀시트
+            if let festival = viewModel.selectedFestival {
+                VStack {
+                    Spacer()
+                    FestivalBottomSheet(festival: festival) {
+                        viewModel.deselectFestival()
                     }
+                    .transition(.move(edge: .bottom))
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+                .ignoresSafeArea(edges: .bottom)
+                .background(Color.black.opacity(0.3).ignoresSafeArea())
+                .onTapGesture { viewModel.deselectFestival() }
             }
         }
+        .statusBarHidden(true)
+        .task {
+            await viewModel.fetchFestivals()
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.selectedFestival?.id)
+        .animation(.easeInOut(duration: 0.3), value: viewModel.errorMessage)
     }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
