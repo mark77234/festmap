@@ -190,8 +190,11 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
             let center = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
             // Try dynamic Objective-C invocation for setMapCenter:animated:
             let sel = NSSelectorFromString("setMapCenter:animated:")
-            if let mapObj = kakaoMap as? NSObject, mapObj.responds(to: sel) {
-                mapObj.perform(sel, with: center, with: NSNumber(value: true))
+            if let mapRef = kakaoMap {
+                let ns = mapRef as NSObject
+                if ns.responds(to: sel) {
+                    ns.perform(sel, with: center, with: NSNumber(value: true))
+                }
             }
         }
     }

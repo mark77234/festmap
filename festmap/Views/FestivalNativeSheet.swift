@@ -162,15 +162,15 @@ struct FestivalNativeSheet: View {
                             }
                             .buttonStyle(.plain)
 
-                            Button(action: { openInExternalBrowser(homepage) }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "safari")
-                                    Text("외부 브라우저로 열기")
-                                        .font(.subheadline)
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                            .buttonStyle(.plain)
+//                            Button(action: { openInExternalBrowser(homepage) }) {
+//                                HStack(spacing: 8) {
+//                                    Image(systemName: "safari")
+//                                    Text("외부 브라우저로 열기")
+//                                        .font(.subheadline)
+//                                        .foregroundColor(.blue)
+//                                }
+//                            }
+//                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -222,7 +222,7 @@ struct FestivalNativeSheet: View {
         }
 
         .confirmationDialog("링크 열기", isPresented: $showOpenChoice, titleVisibility: .visible) {
-            Button("앱 내에서 열기") {
+            Button("앱 내 보기") {
                 if let url = pendingOpenURL {
                     safariURL = url
                     showSafari = true
