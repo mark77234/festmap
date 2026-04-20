@@ -4,11 +4,12 @@ import CoreLocation
 struct ContentView: View {
     @StateObject private var viewModel = FestivalMapViewModel()
     @StateObject private var locationManager = LocationManager()
+    @State private var isTracking: Bool = false
 
     var body: some View {
         ZStack {
             // 풀스크린 카카오맵
-            KakaoMapView(viewModel: viewModel, locationManager: locationManager)
+            KakaoMapView(viewModel: viewModel, locationManager: locationManager, isTracking: isTracking)
                 .ignoresSafeArea()
 
             // 상단 Glassy 제목 (네이티브 스타일)
@@ -29,17 +30,22 @@ struct ContentView: View {
                 HStack {
                     Spacer()
                     Button {
-                        // 권한 요청 또는 업데이트 시작
-                        if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
-                            locationManager.startUpdating()
+                        // tracking 토글
+                        isTracking.toggle()
+                        if isTracking {
+                            if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
+                                locationManager.startUpdating()
+                            } else {
+                                locationManager.requestPermission()
+                            }
                         } else {
-                            locationManager.requestPermission()
+                            locationManager.stopUpdating()
                         }
                     } label: {
-                        Image(systemName: "location.fill")
+                        Image(systemName: isTracking ? "location.fill" : "location")
                             .foregroundColor(.white)
                             .padding(10)
-                            .background(Color.blue)
+                            .background(isTracking ? Color.blue : Color.gray.opacity(0.5))
                             .clipShape(Circle())
                             .shadow(radius: 4)
                     }

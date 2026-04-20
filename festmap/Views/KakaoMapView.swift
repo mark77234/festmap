@@ -5,14 +5,18 @@ import CoreLocation
 struct KakaoMapView: UIViewControllerRepresentable {
     @ObservedObject var viewModel: FestivalMapViewModel
     @ObservedObject var locationManager: LocationManager
+    var isTracking: Bool
 
     func makeUIViewController(context: Context) -> KakaoMapViewController {
-        KakaoMapViewController(viewModel: viewModel, locationManager: locationManager)
+        let vc = KakaoMapViewController(viewModel: viewModel, locationManager: locationManager)
+        vc.setTrackingEnabled(isTracking)
+        return vc
     }
 
     func updateUIViewController(_ vc: KakaoMapViewController, context: Context) {
         vc.updateFestivals(viewModel.festivals)
         vc.updateUserLocation(locationManager.lastLocation)
+        vc.setTrackingEnabled(isTracking)
     }
 }
 
@@ -30,6 +34,7 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
 
     private var locationManager: LocationManager?
     private let userPoiID = "user_location"
+    private var trackingEnabled = false
 
     init(viewModel: FestivalMapViewModel, locationManager: LocationManager) {
         self.viewModel = viewModel
@@ -159,8 +164,14 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
     }
 
     func updateUserLocation(_ coordinate: CLLocationCoordinate2D?) {
-        guard let map = kakaoMap,
-              let layer = map.getLabelManager().getLabelLayer(layerID: "userLayer") else { return }
+        guard let map = kakaoMap else { return }
+
+        // ensure user layer exists
+        if map.getLabelManager().getLabelLayer(layerID: "userLayer") == nil {
+            setupUserLayer()
+        }
+
+        guard let layer = map.getLabelManager().getLabelLayer(layerID: "userLayer") else { return }
 
         // remove old user poi then add new one (if any)
         layer.removePois(poiIDs: [userPoiID])
@@ -174,6 +185,19 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         option.clickable = false
         _ = layer.addPoi(option: option, at: MapPoint(longitude: coord.longitude, latitude: coord.latitude))
         layer.showAllPois()
+
+        if trackingEnabled {
+            let center = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
+            // Try dynamic Objective-C invocation for setMapCenter:animated:
+            let sel = NSSelectorFromString("setMapCenter:animated:")
+            if let mapObj = kakaoMap as? NSObject, mapObj.responds(to: sel) {
+                mapObj.perform(sel, with: center, with: NSNumber(value: true))
+            }
+        }
+    }
+
+    func setTrackingEnabled(_ enabled: Bool) {
+        trackingEnabled = enabled
     }
 
     private func makeUserMarkerImage() -> UIImage {
