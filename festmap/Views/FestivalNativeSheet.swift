@@ -17,6 +17,7 @@ struct FestivalNativeSheet: View {
     @State private var alertMessage = ""
     @State private var showOpenChoice = false
     @State private var pendingOpenURL: URL? = nil
+    @State private var showFullDetail = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -71,9 +72,19 @@ struct FestivalNativeSheet: View {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(festival.title)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
+                    HStack(alignment: .top) {
+                        Text(festival.title)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Button(action: { showFullDetail = true }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "rectangle.expand.vertical")
+                                Text("자세히 보기")
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     Text(festival.formattedPeriod)
                         .font(.subheadline)
@@ -225,6 +236,10 @@ struct FestivalNativeSheet: View {
             Button("취소", role: .cancel) { }
         } message: {
             Text("이 링크는 안전 연결이 아닐 수 있습니다. 외부 브라우저로 여시겠습니까?")
+        }
+
+        .fullScreenCover(isPresented: $showFullDetail) {
+            FestivalDetailFullView(festival: festival)
         }
 
         // 로딩 오버레이
