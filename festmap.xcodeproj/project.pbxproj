@@ -263,7 +263,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC_DSYM=\"${SRCROOT}/KakaoMapsSDK.framework.dSYM\"\nDSYM_DEST=\"${DWARF_DSYM_FOLDER_PATH}/KakaoMapsSDK.framework.dSYM\"\n\nif [ -d \"${SRC_DSYM}\" ]; then\n    cp -R \"${SRC_DSYM}\" \"${DSYM_DEST}\"\n    echo \"Copied KakaoMapsSDK.framework.dSYM to ${DSYM_DEST}\"\n    if [ -n \"${ARCHIVE_DSYMS_PATH}\" ]; then\n        cp -R \"${SRC_DSYM}\" \"${ARCHIVE_DSYMS_PATH}/KakaoMapsSDK.framework.dSYM\"\n        echo \"Also copied KakaoMapsSDK.framework.dSYM to ${ARCHIVE_DSYMS_PATH}\"\n    fi\nelse\n    echo \"warning: KakaoMapsSDK.framework.dSYM not found at ${SRC_DSYM}\"\nfi\n";
+			shellScript = "SRC_DSYM=\"${SRCROOT}/KakaoMapsSDK.framework.dSYM\"\nDSYM_DEST=\"${DWARF_DSYM_FOLDER_PATH}/KakaoMapsSDK.framework.dSYM\"\n\nif [ -d \"${SRC_DSYM}\" ]; then\n    ditto \"${SRC_DSYM}\" \"${DSYM_DEST}\"\n    echo \"Copied KakaoMapsSDK.framework.dSYM to ${DSYM_DEST}\"\n    if [ -n \"${ARCHIVE_DSYMS_PATH}\" ]; then\n        ditto \"${SRC_DSYM}\" \"${ARCHIVE_DSYMS_PATH}/KakaoMapsSDK.framework.dSYM\"\n        echo \"Also copied KakaoMapsSDK.framework.dSYM to ${ARCHIVE_DSYMS_PATH}\"\n    fi\nelse\n    echo \"warning: KakaoMapsSDK.framework.dSYM not found at ${SRC_DSYM}\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
