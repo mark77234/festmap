@@ -10,6 +10,9 @@ struct Festival: Identifiable {
     let startDate: String
     let endDate: String
     let phone: String?
+    // 추가 상세 정보
+    let overview: String?
+    let homepage: String?
 
     var formattedPeriod: String {
         "\(formatDate(startDate)) ~ \(formatDate(endDate))"
@@ -82,4 +85,48 @@ struct FestivalItem: Decodable {
     let eventstartdate: String?
     let eventenddate: String?
     let tel: String?
+}
+
+// MARK: - detailCommon2 응답 타입
+
+struct TourAPIDetailResponse: Decodable {
+    let response: TourAPIDetailBody
+}
+
+struct TourAPIDetailBody: Decodable {
+    let header: TourAPIHeader?
+    let body: TourAPIDetailContent?
+}
+
+struct TourAPIDetailContent: Decodable {
+    let items: TourAPIDetailItemContainer?
+    let numOfRows: Int?
+    let pageNo: Int?
+    let totalCount: Int?
+}
+
+struct TourAPIDetailItemContainer: Decodable {
+    let item: [TourAPIDetailItem]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let arr = try? container.decode([TourAPIDetailItem].self, forKey: .item) {
+            item = arr
+        } else if let single = try? container.decode(TourAPIDetailItem.self, forKey: .item) {
+            item = [single]
+        } else {
+            item = []
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case item }
+}
+
+struct TourAPIDetailItem: Decodable {
+    let overview: String?
+    let contentid: String?
+    let homepage: String?
+    let tel: String?
+    let firstimage: String?
+    let title: String?
 }

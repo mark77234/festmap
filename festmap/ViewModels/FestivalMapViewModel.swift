@@ -22,6 +22,34 @@ class FestivalMapViewModel: ObservableObject {
 
     func selectFestival(_ festival: Festival) {
         selectedFestival = festival
+
+        Task {
+            do {
+                if let detail = try await TourAPIService.shared.fetchFestivalDetail(contentId: festival.id) {
+                    // 병합: 상세정보로 업데이트
+                    let updated = Festival(
+                        id: festival.id,
+                        title: festival.title,
+                        address: festival.address,
+                        longitude: festival.longitude,
+                        latitude: festival.latitude,
+                        imageURL: detail.firstimage ?? festival.imageURL,
+                        startDate: festival.startDate,
+                        endDate: festival.endDate,
+                        phone: detail.tel ?? festival.phone,
+                        overview: detail.overview ?? festival.overview,
+                        homepage: detail.homepage ?? festival.homepage
+                    )
+                    print("[ViewModel] fetched detail for id: \(festival.id) homepage:\(updated.homepage ?? "-") overviewPresent:\(updated.overview != nil)")
+                    // 메인 스레드에서 바인딩 업데이트
+                    await MainActor.run {
+                        self.selectedFestival = updated
+                    }
+                }
+            } catch {
+                print("[ViewModel] fetchFestivalDetail error: \(error)")
+            }
+        }
     }
 
     func deselectFestival() {

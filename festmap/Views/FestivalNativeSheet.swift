@@ -69,6 +69,18 @@ struct FestivalNativeSheet: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    if let homepage = festival.homepage, !homepage.isEmpty {
+                        Button(action: { openHomepage(homepage) }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "link")
+                                Text("홈페이지 보기")
+                                    .font(.subheadline)
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
 
                 Spacer()
@@ -76,6 +88,20 @@ struct FestivalNativeSheet: View {
             .padding(.horizontal, 20)
 
             Spacer()
+
+            if let overview = festival.overview, !overview.isEmpty {
+                Divider()
+                    .padding(.horizontal, 20)
+                ScrollView {
+                    Text(overview)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 12)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxHeight: 220)
+            }
         }
         .padding(.bottom, 8)
         .background(.ultraThinMaterial)
@@ -124,11 +150,24 @@ struct FestivalNativeSheet: View {
             _ = openURL(url)
         }
     }
+
+    private func openHomepage(_ urlString: String) {
+        var str = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !str.hasPrefix("http://") && !str.hasPrefix("https://") {
+            str = "https://\(str)"
+        }
+        guard let url = URL(string: str) else { return }
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else {
+            _ = openURL(url)
+        }
+    }
 }
 
 struct FestivalNativeSheet_Previews: PreviewProvider {
     static var previews: some View {
-        FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678")) {
+        FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678", overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.", homepage: "https://example.com")) {
             // dismiss
         }
         .previewLayout(.sizeThatFits)
