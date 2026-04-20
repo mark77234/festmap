@@ -9,6 +9,24 @@ struct ContentView: View {
             KakaoMapView(viewModel: viewModel)
                 .ignoresSafeArea()
 
+            // 상단 Glassy 제목 (네이티브 스타일)
+            VStack {
+                HStack {
+                    Text("축제어디?")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 14)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 44)
+                Spacer()
+            }
+            .ignoresSafeArea(edges: .top)
+
             // 로딩 인디케이터
             if viewModel.isLoading {
                 ProgressView()

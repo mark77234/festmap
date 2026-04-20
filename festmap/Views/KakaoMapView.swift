@@ -150,15 +150,23 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
     }
 
     private func makeMarkerImage() -> UIImage {
-        let size = CGSize(width: 44, height: 44)
-        return UIGraphicsImageRenderer(size: size).image { ctx in
-            UIColor(red: 1.0, green: 0.45, blue: 0.2, alpha: 1.0).setFill()
-            ctx.cgContext.fillEllipse(in: CGRect(x: 2, y: 2, width: 40, height: 40))
-            let emoji = "🎪" as NSString
-            let attrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 24)]
-            let ts = emoji.size(withAttributes: attrs)
-            emoji.draw(in: CGRect(x: (size.width - ts.width) / 2, y: (size.height - ts.height) / 2,
-                                  width: ts.width, height: ts.height), withAttributes: attrs)
+        let size = CGSize(width: 30, height: 30)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            let fillColor = UIColor(red: 0.95, green: 0.47, blue: 0.22, alpha: 1.0)
+            fillColor.setFill()
+            ctx.cgContext.fillEllipse(in: CGRect(origin: .zero, size: size))
+
+            // SF Symbol 사용: ticket.fill (작고 식별 가능한 아이콘)
+            let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
+            if let symbol = UIImage(systemName: "ticket.fill", withConfiguration: config)?.withTintColor(.white, renderingMode: .alwaysOriginal) {
+                let symSize = symbol.size
+                let rect = CGRect(x: (size.width - symSize.width) / 2,
+                                  y: (size.height - symSize.height) / 2,
+                                  width: symSize.width,
+                                  height: symSize.height)
+                symbol.draw(in: rect)
+            }
         }
     }
 }
