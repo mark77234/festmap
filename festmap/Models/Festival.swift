@@ -13,6 +13,8 @@ struct Festival: Identifiable {
     // 추가 상세 정보
     let overview: String?
     let homepage: String?
+    // 추가 이미지 컬렉션 (detailImage2)
+    let imageURLs: [String]?
 
     var formattedPeriod: String {
         "\(formatDate(startDate)) ~ \(formatDate(endDate))"
@@ -129,4 +131,48 @@ struct TourAPIDetailItem: Decodable {
     let tel: String?
     let firstimage: String?
     let title: String?
+}
+
+// MARK: - detailImage2 응답 타입
+
+struct TourAPIDetailImageResponse: Decodable {
+    let response: TourAPIDetailImageBody
+}
+
+struct TourAPIDetailImageBody: Decodable {
+    let header: TourAPIHeader?
+    let body: TourAPIDetailImageContent?
+}
+
+struct TourAPIDetailImageContent: Decodable {
+    let items: TourAPIDetailImageItemContainer?
+    let numOfRows: Int?
+    let pageNo: Int?
+    let totalCount: Int?
+}
+
+struct TourAPIDetailImageItemContainer: Decodable {
+    let item: [TourAPIDetailImageItem]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let arr = try? container.decode([TourAPIDetailImageItem].self, forKey: .item) {
+            item = arr
+        } else if let single = try? container.decode(TourAPIDetailImageItem.self, forKey: .item) {
+            item = [single]
+        } else {
+            item = []
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case item }
+}
+
+struct TourAPIDetailImageItem: Decodable {
+    let cpyrhtDivCd: String?
+    let contentid: String?
+    let imgname: String?
+    let originimgurl: String?
+    let serialnum: String?
+    let smallimageurl: String?
 }

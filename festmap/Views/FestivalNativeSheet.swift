@@ -20,8 +20,32 @@ struct FestivalNativeSheet: View {
             }
             .padding(.top, 8)
 
+            // 이미지 갤러리: detailImage2에서 가져온 여러 이미지가 있으면 상단에 좌우 스와이프 가능한 갤러리로 노출
+            if let imgs = festival.imageURLs, !imgs.isEmpty {
+                TabView {
+                    ForEach(imgs, id: \.self) { img in
+                        AsyncImage(url: URL(string: img)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image.resizable().scaledToFill()
+                            case .failure, .empty:
+                                placeholderView
+                            @unknown default:
+                                placeholderView
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 220)
+                        .clipped()
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .frame(height: 220)
+            }
+
             HStack(alignment: .top, spacing: 12) {
-                if let urlString = festival.imageURL, let url = URL(string: urlString) {
+                // 갤러리가 없는 경우에만 썸네일을 우측에 표시
+                if (festival.imageURLs?.isEmpty ?? true), let urlString = festival.imageURL, let url = URL(string: urlString) {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
@@ -195,7 +219,7 @@ struct FestivalNativeSheet: View {
 
 struct FestivalNativeSheet_Previews: PreviewProvider {
     static var previews: some View {
-        FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678", overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.", homepage: "https://example.com")) {
+        FestivalNativeSheet(festival: Festival(id: "1", title: "샘플 축제", address: "서울시 강남구", longitude: 127.0, latitude: 37.0, imageURL: nil, startDate: "20240101", endDate: "20240103", phone: "02-1234-5678", overview: "샘플 축제 설명입니다. 다양한 공연과 먹거리장이 준비되어 있습니다.", homepage: "https://example.com", imageURLs: ["https://picsum.photos/800/400","https://picsum.photos/801/400"])) {
             // dismiss
         }
         .environmentObject(FestivalMapViewModel())

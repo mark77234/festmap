@@ -97,7 +97,8 @@ final class TourAPIService {
                 endDate: item.eventenddate ?? "",
                 phone: item.tel.flatMap { $0.isEmpty ? nil : $0 },
                 overview: nil,
-                homepage: nil
+                homepage: nil,
+                imageURLs: nil
             )
         }
     }
@@ -126,6 +127,30 @@ final class TourAPIService {
         }
 
         return items.first
+    }
+
+    func fetchFestivalImages(contentId: String) async throws -> [String] {
+        let params: [String: String] = [
+            "contentId": contentId,
+            "imageYN": "Y",
+            "numOfRows": "100",
+            "pageNo": "1"
+        ]
+
+        let data = try await client.get(path: "detailImage2", params: params)
+        let decoded = try JSONDecoder().decode(TourAPIDetailImageResponse.self, from: data)
+
+        if let code = decoded.response.header?.resultCode, code != "0000" {
+            let msg = decoded.response.header?.resultMsg ?? "Unknown error"
+            throw NSError(domain: "TourAPI", code: Int(code) ?? -1, userInfo: [NSLocalizedDescriptionKey: "API Error \(code): \(msg)"])
+        }
+
+        let items = decoded.response.body?.items?.item ?? []
+        print("[TourAPIService] detailImage2 items count: \(items.count) for contentId: \(contentId)")
+
+        // 우선 originimgurl 우선, 없으면 smallimageurl 사용
+        let urls = items.compactMap { $0.originimgurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.originimgurl : ($0.smallimageurl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? $0.smallimageurl : nil) }
+        return urls
     }
 
     // 유틸
