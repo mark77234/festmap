@@ -12,6 +12,11 @@ struct FestivalNativeSheet: View {
     @State private var showCopied = false
     @State private var showSafari = false
     @State private var safariURL: URL? = nil
+    @State private var showAlert = false
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
+    @State private var showOpenChoice = false
+    @State private var pendingOpenURL: URL? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -99,15 +104,27 @@ struct FestivalNativeSheet: View {
                     }
 
                     if let homepage = festival.homepage, !homepage.isEmpty {
-                        Button(action: { openHomepage(homepage) }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "link")
-                                Text("홈페이지 보기")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
+                        HStack(spacing: 12) {
+                            Button(action: { openHomepage(homepage) }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "link")
+                                    Text("앱 내에서 보기")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                }
                             }
+                            .buttonStyle(.plain)
+
+                            Button(action: { openInExternalBrowser(homepage) }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "safari")
+                                    Text("외부 브라우저로 열기")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
 
@@ -152,6 +169,27 @@ struct FestivalNativeSheet: View {
             }
         }
         .zIndex(0)
+
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("확인")))
+        }
+
+        .confirmationDialog("링크 열기", isPresented: $showOpenChoice, titleVisibility: .visible) {
+            Button("앱 내에서 열기") {
+                if let url = pendingOpenURL {
+                    safariURL = url
+                    showSafari = true
+                }
+            }
+            Button("Safari로 열기") {
+                if let url = pendingOpenURL {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("취소", role: .cancel) { }
+        } message: {
+            Text("이 링크는 안전 연결이 아닐 수 있습니다. 외부 브라우저로 여시겠습니까?")
+        }
 
         // 로딩 오버레이
         .overlay(alignment: .center) {
@@ -202,7 +240,7 @@ struct FestivalNativeSheet: View {
         if let url = URL(string: "tel://\(digits)"), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
         } else if let url = URL(string: "tel://\(digits)") {
-            _ = openURL(url)
+            openURL(url)
         }
     }
 
@@ -211,9 +249,74 @@ struct FestivalNativeSheet: View {
         if !str.hasPrefix("http://") && !str.hasPrefix("https://") {
             str = "https://\(str)"
         }
-        guard let url = URL(string: str) else { return }
-        safariURL = url
-        showSafari = true
+        guard let url = URL(string: str) else {
+            presentAlert(title: "잘못된 주소", message: "홈페이지 주소가 올바르지 않습니다.")
+            return
+        }
+
+        // 사전 체크: HEAD 요청으로 상태 코드 확인, 실패 시 GET으로 폴백
+        Task {
+            func presentAlertMain(_ title: String, _ message: String) async {
+                await MainActor.run {
+                    presentAlert(title: title, message: message)
+                }
+            }
+
+            var ok = false
+            // 1) HEAD 시도
+            do {
+                var req = URLRequest(url: url)
+                req.httpMethod = "HEAD"
+                req.timeoutInterval = 6
+                let (_, response) = try await URLSession.shared.data(for: req)
+                if let http = response as? HTTPURLResponse, (200...399).contains(http.statusCode) {
+                    ok = true
+                }
+            } catch {
+                // HEAD 실패하면 폴백으로 GET 시도
+            }
+
+            if !ok {
+                do {
+                    var req2 = URLRequest(url: url)
+                    req2.httpMethod = "GET"
+                    req2.timeoutInterval = 8
+                    let (_, response2) = try await URLSession.shared.data(for: req2)
+                    if let http2 = response2 as? HTTPURLResponse, (200...399).contains(http2.statusCode) {
+                        ok = true
+                    } else if let http2 = response2 as? HTTPURLResponse {
+                        await presentAlertMain("홈페이지 열기 실패", "서버 응답 코드: \(http2.statusCode)")
+                    }
+                } catch {
+                    await presentAlertMain("홈페이지에 연결할 수 없음", "네트워크 오류: \(error.localizedDescription)")
+                }
+            }
+
+            if ok {
+                await MainActor.run {
+                    safariURL = url
+                    showSafari = true
+                }
+            }
+        }
+    }
+
+    private func presentAlert(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
+    }
+
+    private func openInExternalBrowser(_ urlString: String) {
+        var str = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !str.hasPrefix("http://") && !str.hasPrefix("https://") {
+            str = "https://\(str)"
+        }
+        guard let url = URL(string: str) else {
+            presentAlert(title: "잘못된 주소", message: "홈페이지 주소가 올바르지 않습니다.")
+            return
+        }
+        UIApplication.shared.open(url)
     }
 }
 
