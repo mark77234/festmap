@@ -62,7 +62,19 @@
   </ArchiveAction>
   <PostActions>
     <ExecutionAction action = "Post-action" title = "Copy KakaoMapsSDK dSYM into archive">
-      <ActionContent scriptText = "/scripts/copy-kakao-dsym.sh"/>
+      <ActionContent
+        scriptText = "#!/bin/sh
+set -e
+SRC_DSYM=\"quot;${PROJECT_DIR}/KakaoMapsSDK.framework.dSYM\"quot;
+DSYM_DEST=\"quot;${ARCHIVE_DSYMS_PATH:-${ARCHIVE_PATH}/dSYMs}\"quot;
+
+if [ -d \"quot;${SRC_DSYM}\"quot; ]; then
+  /usr/bin/ditto \"quot;${SRC_DSYM}\"quot; \"quot;${DSYM_DEST}/KakaoMapsSDK.framework.dSYM\"quot;
+  echo \"quot;Copied KakaoMapsSDK.framework.dSYM to ${DSYM_DEST}\"quot;
+else
+  echo \"quot;warning: KakaoMapsSDK.framework.dSYM not found at ${SRC_DSYM}\"quot;
+fi
+"/>
       <BuildableReference
         BuildableIdentifier = "primary"
         BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
