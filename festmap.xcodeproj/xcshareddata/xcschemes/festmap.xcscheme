@@ -7,7 +7,7 @@
       <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
         <BuildableReference
            BuildableIdentifier = "primary"
-           BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+           BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
            BuildableName = "festmap.app"
            BlueprintName = "festmap"
            ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -20,7 +20,7 @@
     <MacroExpansion>
       <BuildableReference
         BuildableIdentifier = "primary"
-        BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+        BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
         BuildableName = "festmap.app"
         BlueprintName = "festmap"
         ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -30,7 +30,7 @@
     <BuildableProductRunnable>
       <BuildableReference
         BuildableIdentifier = "primary"
-        BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+        BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
         BuildableName = "festmap.app"
         BlueprintName = "festmap"
         ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -39,7 +39,7 @@
   <ProfileAction buildConfiguration = "Release">
     <BuildableReference
       BuildableIdentifier = "primary"
-      BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+      BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
       BuildableName = "festmap.app"
       BlueprintName = "festmap"
       ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -47,7 +47,7 @@
   <AnalyzeAction buildConfiguration = "Debug">
     <BuildableReference
       BuildableIdentifier = "primary"
-      BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+      BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
       BuildableName = "festmap.app"
       BlueprintName = "festmap"
       ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -55,7 +55,7 @@
   <ArchiveAction buildConfiguration = "Release" revealArchiveInOrganizer = "YES">
     <BuildableReference
       BuildableIdentifier = "primary"
-      BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+      BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
       BuildableName = "festmap.app"
       BlueprintName = "festmap"
       ReferencedContainer = "container:festmap.xcodeproj"/>
@@ -77,7 +77,7 @@ fi
 "/>
       <BuildableReference
         BuildableIdentifier = "primary"
-        BlueprintIdentifier = "12712AC72F9538B800D2CBB5"
+        BlueprintIdentifier = "12712AC82F9538B800D2CBB5"
         BuildableName = "festmap.app"
         BlueprintName = "festmap"
         ReferencedContainer = "container:festmap.xcodeproj"/>
