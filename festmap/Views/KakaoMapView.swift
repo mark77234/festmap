@@ -1,19 +1,23 @@
 import SwiftUI
 import KakaoMapsSDK
+import CoreLocation
 
 struct KakaoMapView: UIViewControllerRepresentable {
     @ObservedObject var viewModel: FestivalMapViewModel
+    @ObservedObject var locationManager: LocationManager
 
     func makeUIViewController(context: Context) -> KakaoMapViewController {
-        KakaoMapViewController(viewModel: viewModel)
+        KakaoMapViewController(viewModel: viewModel, locationManager: locationManager)
     }
 
     func updateUIViewController(_ vc: KakaoMapViewController, context: Context) {
         vc.updateFestivals(viewModel.festivals)
+        vc.updateUserLocation(locationManager.lastLocation)
     }
 }
 
 // MARK: - KakaoMapViewController
+
 
 class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapEventDelegate {
 
@@ -24,8 +28,12 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
     private var pendingFestivals: [Festival] = []
     private var isMapReady = false
 
-    init(viewModel: FestivalMapViewModel) {
+    private var locationManager: LocationManager?
+    private let userPoiID = "user_location"
+
+    init(viewModel: FestivalMapViewModel, locationManager: LocationManager) {
         self.viewModel = viewModel
+        self.locationManager = locationManager
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -84,6 +92,7 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         kakaoMap?.poiClickable = true
         isMapReady = true
         setupPOILayer()
+        setupUserLayer()
         if !pendingFestivals.isEmpty {
             updateMarkers(festivals: pendingFestivals)
             pendingFestivals = []
@@ -129,6 +138,62 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         let iconStyle = PoiIconStyle(symbol: makeMarkerImage(), anchorPoint: CGPoint(x: 0.5, y: 1.0))
         let poiStyle = PoiStyle(styleID: "festivalStyle", styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
         lm.addPoiStyle(poiStyle)
+    }
+
+    private func setupUserLayer() {
+        guard let map = kakaoMap else { return }
+        let lm = map.getLabelManager()
+
+        let layerOption = LabelLayerOptions(
+            layerID: "userLayer",
+            competitionType: .none,
+            competitionUnit: .symbolFirst,
+            orderType: .rank,
+            zOrder: 10002
+        )
+        _ = lm.addLabelLayer(option: layerOption)
+
+        let iconStyle = PoiIconStyle(symbol: makeUserMarkerImage(), anchorPoint: CGPoint(x: 0.5, y: 0.5))
+        let poiStyle = PoiStyle(styleID: "userStyle", styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
+        lm.addPoiStyle(poiStyle)
+    }
+
+    func updateUserLocation(_ coordinate: CLLocationCoordinate2D?) {
+        guard let map = kakaoMap,
+              let layer = map.getLabelManager().getLabelLayer(layerID: "userLayer") else { return }
+
+        // remove old user poi then add new one (if any)
+        layer.removePois(poiIDs: [userPoiID])
+
+        guard let coord = coordinate else {
+            // nothing to add
+            return
+        }
+
+        let option = PoiOptions(styleID: "userStyle", poiID: userPoiID)
+        option.clickable = false
+        _ = layer.addPoi(option: option, at: MapPoint(longitude: coord.longitude, latitude: coord.latitude))
+        layer.showAllPois()
+    }
+
+    private func makeUserMarkerImage() -> UIImage {
+        let size = CGSize(width: 20, height: 20)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            let outerRect = CGRect(origin: .zero, size: size)
+            let outerPath = UIBezierPath(ovalIn: outerRect)
+            UIColor.systemBlue.setFill()
+            outerPath.fill()
+
+            let innerSize = CGSize(width: 8, height: 8)
+            let innerRect = CGRect(x: (size.width - innerSize.width) / 2,
+                                   y: (size.height - innerSize.height) / 2,
+                                   width: innerSize.width,
+                                   height: innerSize.height)
+            let innerPath = UIBezierPath(ovalIn: innerRect)
+            UIColor.white.setFill()
+            innerPath.fill()
+        }
     }
 
     private func updateMarkers(festivals: [Festival]) {

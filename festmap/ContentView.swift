@@ -1,12 +1,14 @@
 import SwiftUI
+import CoreLocation
 
 struct ContentView: View {
     @StateObject private var viewModel = FestivalMapViewModel()
+    @StateObject private var locationManager = LocationManager()
 
     var body: some View {
         ZStack {
             // 풀스크린 카카오맵
-            KakaoMapView(viewModel: viewModel)
+            KakaoMapView(viewModel: viewModel, locationManager: locationManager)
                 .ignoresSafeArea()
 
             // 상단 Glassy 제목 (네이티브 스타일)
@@ -23,6 +25,27 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 44)
+                // 내 위치 버튼 (우측 상단)
+                HStack {
+                    Spacer()
+                    Button {
+                        // 권한 요청 또는 업데이트 시작
+                        if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
+                            locationManager.startUpdating()
+                        } else {
+                            locationManager.requestPermission()
+                        }
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(.white)
+                            .padding(10)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.top, 44)
+                }
                 Spacer()
             }
             .ignoresSafeArea(edges: .top)
