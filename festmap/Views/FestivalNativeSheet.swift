@@ -91,8 +91,6 @@ struct FestivalNativeSheet: View {
             }
             .padding(.horizontal, 20)
 
-            Spacer()
-
             if let overview = festival.overview, !overview.isEmpty {
                 Divider()
                     .padding(.horizontal, 20)
@@ -104,7 +102,6 @@ struct FestivalNativeSheet: View {
                         .padding(.bottom, 12)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxHeight: 220)
             }
         }
         .padding(.bottom, 8)
