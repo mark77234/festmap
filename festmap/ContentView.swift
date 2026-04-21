@@ -189,6 +189,7 @@ struct ContentView: View {
         .statusBarHidden(true)
         .task {
             await viewModel.fetchFestivals()
+            bootstrapLocationOnLaunch()
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.selectedFestival?.id)
         .animation(.easeInOut(duration: 0.3), value: viewModel.errorMessage)
@@ -211,6 +212,19 @@ struct ContentView: View {
     private func reloadFestivals() {
         Task {
             await viewModel.fetchFestivals()
+        }
+    }
+
+    private func bootstrapLocationOnLaunch() {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationManager.startUpdating()
+        case .notDetermined:
+            locationManager.requestPermission()
+        case .denied, .restricted:
+            locationManager.stopUpdating()
+        @unknown default:
+            locationManager.stopUpdating()
         }
     }
 }
