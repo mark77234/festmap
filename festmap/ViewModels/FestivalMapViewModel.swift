@@ -1,13 +1,36 @@
 import Foundation
 import Combine
 
+struct FestivalMapFocusRequest: Identifiable {
+    let id = UUID()
+    let festival: Festival
+}
+
 @MainActor
 class FestivalMapViewModel: ObservableObject {
     @Published var festivals: [Festival] = []
+    @Published var searchText: String = ""
+    @Published var mapFocusRequest: FestivalMapFocusRequest? = nil
     @Published var selectedFestival: Festival? = nil
     @Published var isDetailLoading: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+
+    var filteredFestivals: [Festival] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return festivals }
+
+        return festivals.filter { festival in
+            festival.title.localizedCaseInsensitiveContains(query) ||
+            festival.address.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    var searchSuggestions: [Festival] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return [] }
+        return Array(filteredFestivals.prefix(12))
+    }
 
     func fetchFestivals() async {
         isLoading = true
@@ -92,5 +115,9 @@ class FestivalMapViewModel: ObservableObject {
     func deselectFestival() {
         selectedFestival = nil
         isDetailLoading = false
+    }
+
+    func requestMapFocus(to festival: Festival) {
+        mapFocusRequest = FestivalMapFocusRequest(festival: festival)
     }
 }

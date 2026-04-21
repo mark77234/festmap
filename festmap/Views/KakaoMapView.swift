@@ -15,6 +15,7 @@ struct KakaoMapView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ vc: KakaoMapViewController, context: Context) {
         vc.updateFestivals(viewModel.festivals)
+        vc.handleMapFocusRequest(viewModel.mapFocusRequest)
         vc.updateUserLocation(locationManager.lastLocation)
         vc.setTrackingEnabled(isTracking)
     }
@@ -22,23 +23,30 @@ struct KakaoMapView: UIViewControllerRepresentable {
 
 // MARK: - KakaoMapViewController
 
-
 class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapEventDelegate {
+
+    private let festivalLayerID = "festivalLayer"
+    private let festivalStyleID = "festivalStyle"
+    private let userLayerID = "userLayer"
+    private let userStyleID = "userStyle"
+    private let userPoiID = "user_location"
 
     private var controller: KMController?
     private var kakaoMap: KakaoMap?
     private weak var viewModel: FestivalMapViewModel?
+
     private var festivalDict: [String: Festival] = [:]
     private var pendingFestivals: [Festival] = []
     private var isMapReady = false
 
-    private var locationManager: LocationManager?
-    private let userPoiID = "user_location"
+    private var lastFestivalSignature: Int?
+    private var lastHandledFocusRequestID: UUID?
+
     private var trackingEnabled = false
 
     init(viewModel: FestivalMapViewModel, locationManager: LocationManager) {
         self.viewModel = viewModel
-        self.locationManager = locationManager
+        _ = locationManager
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -73,6 +81,13 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         }
     }
 
+    func handleMapFocusRequest(_ request: FestivalMapFocusRequest?) {
+        guard let request else { return }
+        guard request.id != lastHandledFocusRequestID else { return }
+        lastHandledFocusRequestID = request.id
+        moveCamera(to: request.festival)
+    }
+
     // MARK: - MapControllerDelegate
 
     func addViews() {
@@ -92,12 +107,15 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
     func addViewSucceeded(_ viewName: String, viewInfoName: String) {
         print("[KakaoMap] addViewSucceeded: \(viewName)")
         guard viewName == "mapview" else { return }
+
         kakaoMap = controller?.getView("mapview") as? KakaoMap
         kakaoMap?.eventDelegate = self
         kakaoMap?.poiClickable = true
+
         isMapReady = true
         setupPOILayer()
         setupUserLayer()
+
         if !pendingFestivals.isEmpty {
             updateMarkers(festivals: pendingFestivals)
             pendingFestivals = []
@@ -132,7 +150,7 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         let lm = map.getLabelManager()
 
         let layerOption = LabelLayerOptions(
-            layerID: "festivalLayer",
+            layerID: festivalLayerID,
             competitionType: .none,
             competitionUnit: .symbolFirst,
             orderType: .rank,
@@ -141,7 +159,7 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         _ = lm.addLabelLayer(option: layerOption)
 
         let iconStyle = PoiIconStyle(symbol: makeMarkerImage(), anchorPoint: CGPoint(x: 0.5, y: 1.0))
-        let poiStyle = PoiStyle(styleID: "festivalStyle", styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
+        let poiStyle = PoiStyle(styleID: festivalStyleID, styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
         lm.addPoiStyle(poiStyle)
     }
 
@@ -150,7 +168,7 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         let lm = map.getLabelManager()
 
         let layerOption = LabelLayerOptions(
-            layerID: "userLayer",
+            layerID: userLayerID,
             competitionType: .none,
             competitionUnit: .symbolFirst,
             orderType: .rank,
@@ -159,36 +177,32 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         _ = lm.addLabelLayer(option: layerOption)
 
         let iconStyle = PoiIconStyle(symbol: makeUserMarkerImage(), anchorPoint: CGPoint(x: 0.5, y: 0.5))
-        let poiStyle = PoiStyle(styleID: "userStyle", styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
+        let poiStyle = PoiStyle(styleID: userStyleID, styles: [PerLevelPoiStyle(iconStyle: iconStyle, level: 0)])
         lm.addPoiStyle(poiStyle)
     }
 
     func updateUserLocation(_ coordinate: CLLocationCoordinate2D?) {
         guard let map = kakaoMap else { return }
 
-        // ensure user layer exists
-        if map.getLabelManager().getLabelLayer(layerID: "userLayer") == nil {
+        if map.getLabelManager().getLabelLayer(layerID: userLayerID) == nil {
             setupUserLayer()
         }
 
-        guard let layer = map.getLabelManager().getLabelLayer(layerID: "userLayer") else { return }
+        guard let layer = map.getLabelManager().getLabelLayer(layerID: userLayerID) else { return }
 
-        // remove old user poi then add new one (if any)
         layer.removePois(poiIDs: [userPoiID])
 
         guard let coord = coordinate else {
-            // nothing to add
             return
         }
 
-        let option = PoiOptions(styleID: "userStyle", poiID: userPoiID)
+        let option = PoiOptions(styleID: userStyleID, poiID: userPoiID)
         option.clickable = false
         _ = layer.addPoi(option: option, at: MapPoint(longitude: coord.longitude, latitude: coord.latitude))
         layer.showAllPois()
 
         if trackingEnabled {
             let center = MapPoint(longitude: coord.longitude, latitude: coord.latitude)
-            // Try dynamic Objective-C invocation for setMapCenter:animated:
             let sel = NSSelectorFromString("setMapCenter:animated:")
             if let mapRef = kakaoMap {
                 let ns = mapRef as NSObject
@@ -203,10 +217,56 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         trackingEnabled = enabled
     }
 
+    private func updateMarkers(festivals: [Festival]) {
+        guard let map = kakaoMap,
+              let layer = map.getLabelManager().getLabelLayer(layerID: festivalLayerID) else { return }
+
+        let signature = festivalsSignature(festivals)
+        if signature == lastFestivalSignature { return }
+        lastFestivalSignature = signature
+
+        let oldIDs = Array(festivalDict.keys)
+        if !oldIDs.isEmpty {
+            layer.removePois(poiIDs: oldIDs)
+        }
+        festivalDict.removeAll()
+
+        for festival in festivals {
+            let option = PoiOptions(styleID: festivalStyleID, poiID: festival.id)
+            option.rank = 0
+            option.clickable = true
+            _ = layer.addPoi(option: option, at: MapPoint(longitude: festival.longitude, latitude: festival.latitude))
+            festivalDict[festival.id] = festival
+        }
+        layer.showAllPois()
+    }
+
+    private func moveCamera(to festival: Festival) {
+        guard let map = kakaoMap else { return }
+
+        let target = MapPoint(longitude: festival.longitude, latitude: festival.latitude)
+        let targetZoom = 4
+        let cameraUpdate = CameraUpdate.make(target: target, zoomLevel: targetZoom, mapView: map)
+        map.moveCamera(cameraUpdate, callback: nil)
+    }
+
+    private func festivalsSignature(_ festivals: [Festival]) -> Int {
+        var hasher = Hasher()
+        hasher.combine(festivals.count)
+
+        for festival in festivals.sorted(by: { $0.id < $1.id }) {
+            hasher.combine(festival.id)
+            hasher.combine(festival.latitude.bitPattern)
+            hasher.combine(festival.longitude.bitPattern)
+        }
+
+        return hasher.finalize()
+    }
+
     private func makeUserMarkerImage() -> UIImage {
         let size = CGSize(width: 20, height: 20)
         let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { ctx in
+        return renderer.image { _ in
             let outerRect = CGRect(origin: .zero, size: size)
             let outerPath = UIBezierPath(ovalIn: outerRect)
             UIColor.systemBlue.setFill()
@@ -223,33 +283,14 @@ class KakaoMapViewController: UIViewController, MapControllerDelegate, KakaoMapE
         }
     }
 
-    private func updateMarkers(festivals: [Festival]) {
-        guard let map = kakaoMap,
-              let layer = map.getLabelManager().getLabelLayer(layerID: "festivalLayer") else { return }
-
-        let oldIDs = Array(festivalDict.keys)
-        if !oldIDs.isEmpty { layer.removePois(poiIDs: oldIDs) }
-        festivalDict.removeAll()
-
-        for festival in festivals {
-            let option = PoiOptions(styleID: "festivalStyle", poiID: festival.id)
-            option.rank = 0
-            option.clickable = true
-            _ = layer.addPoi(option: option, at: MapPoint(longitude: festival.longitude, latitude: festival.latitude))
-            festivalDict[festival.id] = festival
-        }
-        layer.showAllPois()
-    }
-
     private func makeMarkerImage() -> UIImage {
         let size = CGSize(width: 30, height: 30)
         let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { ctx in
+        return renderer.image { _ in
             let fillColor = UIColor(red: 0.95, green: 0.47, blue: 0.22, alpha: 1.0)
             fillColor.setFill()
-            ctx.cgContext.fillEllipse(in: CGRect(origin: .zero, size: size))
+            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
 
-            // SF Symbol 사용: ticket.fill (작고 식별 가능한 아이콘)
             let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
             if let symbol = UIImage(systemName: "ticket.fill", withConfiguration: config)?.withTintColor(.white, renderingMode: .alwaysOriginal) {
                 let symSize = symbol.size
